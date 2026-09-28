@@ -10,7 +10,9 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'https://goldedge-red.vercel.app',
-    executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || undefined,
+    launchOptions: {
+      executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || undefined,
+    },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

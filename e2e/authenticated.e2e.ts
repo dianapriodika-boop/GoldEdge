@@ -48,7 +48,7 @@ test.describe('GoldEdge Pro authenticated production flow', () => {
     await expect(page).toHaveURL(/\/$/)
     await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible()
 
-    const protectedResponse = await request.get(`${process.env.E2E_BASE_URL ?? 'https://goldedge-red.vercel.app'}/api/market?tf=M15`)
+    const protectedResponse = await request.get(`${process.env.E2E_BASE_URL ?? 'https://goldedge-red.vercel.app'}/api/market?timeframe=M15`)
     expect(protectedResponse.status()).toBe(401)
   })
 })
