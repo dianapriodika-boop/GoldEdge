@@ -1,0 +1,39 @@
+name: Authenticated production E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'GoldEdge Pro deployment URL'
+        required: false
+        default: 'https://goldedge-red.vercel.app'
+        type: string
+
+jobs:
+  authenticated-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      E2E_BASE_URL: ${{ inputs.base_url || vars.E2E_BASE_URL || 'https://goldedge-red.vercel.app' }}
+      E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+      E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Verify secret presence without exposing values
+        run: |
+          test -n "$E2E_TEST_EMAIL" && echo 'E2E_TEST_EMAIL_PRESENT=true' || echo 'E2E_TEST_EMAIL_PRESENT=false'
+          test -n "$E2E_TEST_PASSWORD" && echo 'E2E_TEST_PASSWORD_PRESENT=true' || echo 'E2E_TEST_PASSWORD_PRESENT=false'
+          test -n "$E2E_TEST_EMAIL" -a -n "$E2E_TEST_PASSWORD"
+      - name: Run authenticated production E2E
+        run: pnpm exec playwright test
