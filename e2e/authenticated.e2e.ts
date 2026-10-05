@@ -25,7 +25,7 @@ test.describe('GoldEdge Pro authenticated production flow', () => {
     expect((await sessionResponse.json()).user).toBeTruthy()
 
     for (const timeframe of ['M15', 'M30', 'H1', 'H4']) {
-      const response = await page.request.get(`/api/market?timeframe=${timeframe}`)
+      const response = await page.request.get(`/api/market?tf=${timeframe}`)
       expect(response.status(), timeframe).toBe(200)
       const body = await response.json()
       expect(body.quote).toBeTruthy()
@@ -36,7 +36,7 @@ test.describe('GoldEdge Pro authenticated production flow', () => {
     }
 
     for (const timeframe of ['M1', 'M5']) {
-      const response = await page.request.get(`/api/market?timeframe=${timeframe}`)
+      const response = await page.request.get(`/api/market?tf=${timeframe}`)
       expect(response.status(), timeframe).toBe(200)
       const body = await response.json()
       expect(body.candles).toEqual([])
