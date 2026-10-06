@@ -10,6 +10,7 @@ type HealthResponse = {
   authentication?: { status: string }
   twelveData?: { configured: boolean; apiCall: string }
   xauUsd?: { status: string; dataValid: boolean }
+  fundamentals?: { status: string; regime?: string; blockingReason?: string | null }
   services?: { frontend?: string; api?: string; database?: string; authentication?: string; marketData?: string; fundamentals?: string }
 }
 
@@ -43,11 +44,12 @@ export function SystemStatus() {
   const ready = health?.status === "ok"
   const marketRateLimited = health?.services?.marketData === "rate_limited"
   const checks = health?.checks ?? {
-    frontend: ready,
-    backend: ready,
-    database: { status: health?.database?.status === "connected" ? "online" : "offline" },
-    authentication: { status: health?.authentication?.status === "configured" ? "online" : "offline" },
+    frontend: { status: health?.services?.frontend ?? "online" },
+    backend: { status: health?.services?.api ?? "offline" },
+    database: { status: health?.services?.database ?? (health?.database?.status === "connected" ? "online" : "offline") },
+    authentication: { status: health?.services?.authentication ?? (health?.authentication?.status === "configured" ? "online" : "offline") },
     marketData: { status: health?.services?.marketData ?? (health?.xauUsd?.status === "connected" && health?.twelveData?.apiCall === "pass" ? "online" : "offline") },
+    fundamentals: { status: health?.services?.fundamentals ?? (health?.fundamentals?.status === "connected" ? "online" : "offline") },
     websocket: { required: false, status: "offline" },
     redis: { required: false, status: "offline" },
     workers: { required: false, status: "offline" },
