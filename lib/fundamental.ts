@@ -23,7 +23,7 @@ function classify(event: TradingEconomicsEvent): EconomicEvent["bias"] {
 }
 
 function parseEvents(rows: TradingEconomicsEvent[], now: number): EconomicEvent[] {
-  return rows.flatMap((row, index) => {
+  return rows.filter((row) => row.Country === "United States" || row.Country === "USD" || row.Country === "US").flatMap((row, index) => {
     const time = row.Date ? Date.parse(row.Date) : NaN
     if (!Number.isFinite(time) || time < now - 24 * 60 * 60 * 1000) return []
     const importance = Number(row.Importance ?? 0)
@@ -48,7 +48,10 @@ async function fetchEconomicEvents(now: number): Promise<EconomicEvent[]> {
   const response = await fetch(`https://api.tradingeconomics.com/calendar/country/United States/${start}/${end}?c=${encodeURIComponent(key)}&f=json`, { cache: "no-store" })
   if (!response.ok) throw new Error(`FUNDAMENTAL_PROVIDER_HTTP_${response.status}`)
   const body = await response.json() as TradingEconomicsEvent[]
-  return parseEvents(Array.isArray(body) ? body : [], now)
+  if (!Array.isArray(body)) throw new Error("FUNDAMENTAL_DATA_INVALID")
+  const events = parseEvents(body, now)
+  if (!events.length) throw new Error("FUNDAMENTAL_DATA_UNAVAILABLE")
+  return events
 }
 
 export async function getFundamentalAssessment(now = Date.now()): Promise<FundamentalAssessment> {
@@ -65,6 +68,7 @@ export async function getFundamentalAssessment(now = Date.now()): Promise<Fundam
 
 export function assessFundamentals(_candles: Candle[], _now = Date.now(), events: EconomicEvent[] = []): FundamentalAssessment {
   if (!process.env.TRADING_ECONOMICS_API_KEY) return { regime: "BLOCKED", riskScore: 100, bias: "NEUTRAL", volatilityState: "NORMAL", atrRatio: 0, blockingReason: "FUNDAMENTAL_DATA_UNAVAILABLE", upcoming: [], notes: ["Source économique réelle non configurée."] }
+  if (!events.length) return { regime: "BLOCKED", riskScore: 100, bias: "NEUTRAL", volatilityState: "NORMAL", atrRatio: 0, blockingReason: "FUNDAMENTAL_DATA_UNAVAILABLE", upcoming: [], notes: ["Aucun événement USD vérifiable n’a été reçu."] }
   const highImpact = events.filter((event) => event.impact === "HIGH" && event.minutesAway >= -30 && event.minutesAway <= 240)
   return { regime: highImpact.length ? "ELEVATED" : "SAFE", riskScore: highImpact.length ? 80 : 0, bias: "NEUTRAL", volatilityState: highImpact.length ? "HIGH" : "NORMAL", atrRatio: 1, blockingReason: null, upcoming: events, notes: ["Données Trading Economics récupérées côté serveur."] }
 }

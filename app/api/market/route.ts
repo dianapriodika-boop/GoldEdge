@@ -10,7 +10,7 @@ import { getFundamentalAssessment } from "@/lib/fundamental"
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-const SYMBOL = "XAUUSD"
+const SYMBOL = "XAU/USD"
 const DISPLAY = "XAU/USD"
 
 function isTimeframe(v: string | null): v is Timeframe {
@@ -22,7 +22,13 @@ export async function GET(request: Request) {
   if (!access.ok) return NextResponse.json({ error: 'Accès non autorisé.' }, { status: access.status, headers: { 'cache-control': 'no-store' } })
   const url = new URL(request.url)
   const raw = url.searchParams.get("tf")
-  const timeframe: Timeframe = isTimeframe(raw) ? raw : "M15"
+  if (!isTimeframe(raw)) {
+    return NextResponse.json(
+      { error: "TIMEFRAME_NOT_ALLOWED", code: "TIMEFRAME_NOT_ALLOWED", allowedTimeframes: ["M15", "M30", "H1", "H4"] },
+      { status: 400, headers: { "cache-control": "no-store" } },
+    )
+  }
+  const timeframe: Timeframe = raw
 
   // RÈGLE N°3 — the server refuses to even scan a forbidden timeframe.
   // No candle data is analysed and no signal is produced.

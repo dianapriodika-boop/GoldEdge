@@ -22,12 +22,12 @@ const EMA_TREND_PERIOD = 200
 /** Empty fundamental assessment used when the engine aborts before Rule 4 could run. */
 function idleFundamental() {
   return {
-    regime: "SAFE" as const,
-    riskScore: 0,
+    regime: "BLOCKED" as const,
+    riskScore: 100,
     bias: "NEUTRAL" as const,
     volatilityState: "NORMAL" as const,
-    atrRatio: 1,
-    blockingReason: null,
+    atrRatio: 0,
+    blockingReason: "FUNDAMENTAL_DATA_UNAVAILABLE",
     upcoming: [],
     notes: ["Analyse fondamentale non exécutée : un verrou antérieur a déjà bloqué le signal."],
   }
