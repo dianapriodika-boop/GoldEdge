@@ -16,6 +16,8 @@ test.describe('GoldEdge Pro authenticated production flow', () => {
     await page.getByLabel('Mot de passe').fill(password as string)
     await page.getByRole('button', { name: 'Ouvrir le terminal' }).click()
 
+    console.log(`E2E_CURRENT_URL=${page.url()}`)
+    console.log('E2E_EXPECTED_URL=/\\/$/')
     await expect(page).toHaveURL(/\/$/)
     await expect(page.getByText('XAU/USD', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('LIVE FEED')).toBeVisible()
@@ -45,6 +47,7 @@ test.describe('GoldEdge Pro authenticated production flow', () => {
     }
 
     await page.getByRole('button', { name: 'Se déconnecter' }).click()
+    console.log(`E2E_URL_AFTER_SIGNOUT=${page.url()}`)
     await expect(page).toHaveURL(/\/$/)
     await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible()
 
