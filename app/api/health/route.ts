@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { getTwelveDataDiagnostic, verifyTwelveData } from "@/lib/market-data/providers/twelve-data"
+import { getFundamentalAssessment } from "@/lib/fundamental"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -35,10 +36,12 @@ export async function GET() {
 
   const authentication = authenticationCheck()
   const twelveData = await verifyTwelveData()
+  const fundamental = await getFundamentalAssessment()
   const diagnostic = twelveData.diagnostic ?? getTwelveDataDiagnostic()
   const xauConnected = twelveData.connected && twelveData.data === "VALID" && diagnostic.freshness === "FRESH"
+  const fundamentalsReady = fundamental.regime !== "BLOCKED"
   const rateLimited = diagnostic.rateLimited === true
-  const ready = databaseStatus === "connected" && authentication.configured && xauConnected
+  const ready = databaseStatus === "connected" && authentication.configured && xauConnected && fundamentalsReady
   const freshnessStatus = diagnostic.freshness === "FRESH" ? "fresh" : diagnostic.freshness === "STALE" ? "stale" : rateLimited ? "rate_limited" : "invalid"
 
   const response = {
@@ -53,6 +56,7 @@ export async function GET() {
       assetType: "COMMODITY",
     },
     xauUsd: { status: xauConnected ? "connected" : "not_ready", symbol: "XAU/USD", dataValid: xauConnected },
+    fundamentals: { status: fundamentalsReady ? "connected" : "not_ready", regime: fundamental.regime, blockingReason: fundamental.blockingReason },
     dataFreshness: { status: freshnessStatus, receivedAt: diagnostic.receivedAt ?? null, ageSeconds: diagnostic.dataAgeSeconds ?? null },
     services: {
       frontend: "online",
@@ -60,8 +64,9 @@ export async function GET() {
       database: databaseStatus === "connected" ? "online" : "offline",
       authentication: authentication.configured ? "online" : "offline",
       marketData: rateLimited ? "rate_limited" : xauConnected ? "online" : "offline",
+      fundamentals: fundamentalsReady ? "online" : "offline",
     },
-    system: ready ? "READY" : rateLimited && databaseStatus === "connected" && authentication.configured ? "DEGRADED" : "NOT READY",
+    system: ready ? "READY" : "NOT READY",
     timestamp: new Date().toISOString(),
   }
 

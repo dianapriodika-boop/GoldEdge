@@ -10,7 +10,7 @@ type HealthResponse = {
   authentication?: { status: string }
   twelveData?: { configured: boolean; apiCall: string }
   xauUsd?: { status: string; dataValid: boolean }
-  services?: { frontend?: string; api?: string; database?: string; authentication?: string; marketData?: string }
+  services?: { frontend?: string; api?: string; database?: string; authentication?: string; marketData?: string; fundamentals?: string }
 }
 
 const labels: Record<string, string> = {
@@ -19,6 +19,7 @@ const labels: Record<string, string> = {
   database: "Database",
   authentication: "Authentication",
   marketData: "Market data",
+  fundamentals: "Fundamentals",
   websocket: "WebSocket",
   redis: "Redis",
   workers: "Workers",
